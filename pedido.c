@@ -4,11 +4,10 @@
 #include <string.h>
 #include <time.h>
 
-#define PRECO_POR_PAGINA 0.10
 
 Pedido **pedidos = NULL;  // Ponteiro para ponteiro de Pedido
 int contadorPedidos = 0; // Contador de pedidos
-int capacidade = 10;      // Capacidade inicial
+int capacidade = 100;      // Capacidade inicial
 
 // Função para obter a data atual
 void obterData(char *data) {
@@ -67,7 +66,7 @@ void listarPedidos() {
     }
 
     for (int i = 0; i < contadorPedidos; i++) {
-        Pedido *p = pedidos[i];
+        Pedido * p = pedidos[i];
         printf("\nPedido #%d\n", p->numero);
         printf("Solicitante: %s\n", p->nomeSolicitante);
         printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
@@ -213,53 +212,4 @@ void liberarMemoria() {
         free(pedidos[i]);
     }
     free(pedidos);
-}
-
-// Função para exibir o menu
-void menu() {
-    int opcao;
-
-    do {
-        printf("\n----- Sistema de Controle de Xerox -----\n");
-        printf("1. Adicionar pedido\n");
-        printf("2. Excluir pedido\n");
-        printf("3. Listar pedidos\n");
-        printf("4. Buscar pedido por número ou nome\n");
-        printf("5. Editar pedido\n");
-        printf("6. Consultar pedidos por status\n");
-        printf("7. Consultar total de cópias e valor arrecadado\n");
-        printf("8. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
-
-        switch (opcao) {
-            case 1:
-                adicionarPedido();
-                break;
-            case 2:
-                excluirPedido();
-                break;
-            case 3:
-                listarPedidos();
-                break;
-            case 4:
-                buscarPedido();
-                break;
-            case 5:
-                editarPedido();
-                break;
-            case 6:
-                consultarPedidosPorStatus();
-                break;
-            case 7:
-                consultarTotalCopiasValor();
-                break;
-            case 8:
-                liberarMemoria();
-                printf("Saindo...\n");
-                break;
-            default:
-                printf("Opção inválida!\n");
-        }
-    } while (opcao != 8);
 }
