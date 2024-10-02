@@ -1,3 +1,4 @@
+#include "pedido.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,29 +6,19 @@
 
 #define PRECO_POR_PAGINA 0.10
 
-typedef struct {
-    int numero;
-    char nome_solicitante[50];
-    char tipo_solicitante[20]; // Aluno, Professor, Funcionario
-    int quantidade_paginas;
-    char data_pedido[11]; // formato: dd/mm/yyyy
-    float valor_total;
-    char status[20]; // Pendente, Concluído, Cancelado
-} Pedido;
-
 Pedido **pedidos = NULL;  // Ponteiro para ponteiro de Pedido
-int contador_pedidos = 0; // Contador de pedidos
+int contadorPedidos = 0; // Contador de pedidos
 int capacidade = 10;      // Capacidade inicial
 
 // Função para obter a data atual
-void obter_data_atual(char *data) {
+void obterData(char *data) {
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     sprintf(data, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
 }
 
 // Função para redimensionar o array de pedidos
-void redimensionar_pedidos() {
+void redimensionarPedidos() {
     capacidade *= 2;
     pedidos = realloc(pedidos, capacidade * sizeof(Pedido *));
     if (pedidos == NULL) {
@@ -37,69 +28,69 @@ void redimensionar_pedidos() {
 }
 
 // Função para adicionar um pedido
-void adicionar_pedido() {
-    if (contador_pedidos >= capacidade) {
-        redimensionar_pedidos();
+void adicionarPedido() {
+    if (contadorPedidos >= capacidade) {
+        redimensionarPedidos();
     }
 
-    pedidos[contador_pedidos] = (Pedido *)malloc(sizeof(Pedido));
-    if (pedidos[contador_pedidos] == NULL) {
+    pedidos[contadorPedidos] = (Pedido *)malloc(sizeof(Pedido));
+    if (pedidos[contadorPedidos] == NULL) {
         printf("Erro ao alocar memória!\n");
         exit(1);
     }
 
-    Pedido *novo_pedido = pedidos[contador_pedidos];
-    novo_pedido->numero = contador_pedidos + 1;
+    Pedido *novoPedido = pedidos[contadorPedidos];
+    novoPedido->numero = contadorPedidos + 1;
 
     printf("Nome do solicitante: ");
-    scanf(" %[^\n]", novo_pedido->nome_solicitante);
+    scanf(" %[^\n]", novoPedido->nomeSolicitante);
 
     printf("Tipo de solicitante (Aluno, Professor, Funcionario): ");
-    scanf(" %[^\n]", novo_pedido->tipo_solicitante);
+    scanf(" %[^\n]", novoPedido->tipoSolicitante);
 
     printf("Quantidade de páginas: ");
-    scanf("%d", &novo_pedido->quantidade_paginas);
+    scanf("%d", &novoPedido->quantidadePaginas);
 
-    obter_data_atual(novo_pedido->data_pedido);
-    novo_pedido->valor_total = novo_pedido->quantidade_paginas * PRECO_POR_PAGINA;
-    strcpy(novo_pedido->status, "Pendente");
+    obterData(novoPedido->dataPedido);
+    novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
+    strcpy(novoPedido->status, "Pendente");
 
-    contador_pedidos++;
+    contadorPedidos++;
     printf("Pedido adicionado com sucesso!\n");
 }
 
 // Função para listar todos os pedidos
-void listar_pedidos() {
-    if (contador_pedidos == 0) {
+void listarPedidos() {
+    if (contadorPedidos == 0) {
         printf("Nenhum pedido registrado.\n");
         return;
     }
 
-    for (int i = 0; i < contador_pedidos; i++) {
+    for (int i = 0; i < contadorPedidos; i++) {
         Pedido *p = pedidos[i];
         printf("\nPedido #%d\n", p->numero);
-        printf("Solicitante: %s\n", p->nome_solicitante);
-        printf("Tipo de solicitante: %s\n", p->tipo_solicitante);
-        printf("Quantidade de páginas: %d\n", p->quantidade_paginas);
-        printf("Data do pedido: %s\n", p->data_pedido);
-        printf("Valor total: R$ %.2f\n", p->valor_total);
+        printf("Solicitante: %s\n", p->nomeSolicitante);
+        printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
+        printf("Quantidade de páginas: %d\n", p->quantidadePaginas);
+        printf("Data do pedido: %s\n", p->dataPedido);
+        printf("Valor total: R$ %.2f\n", p->valorTotal);
         printf("Status: %s\n", p->status);
     }
 }
 
 // Função para excluir um pedido
-void excluir_pedido() {
+void excluirPedido() {
     int numero;
     printf("Digite o número do pedido que deseja excluir: ");
     scanf("%d", &numero);
 
-    for (int i = 0; i < contador_pedidos; i++) {
+    for (int i = 0; i < contadorPedidos; i++) {
         if (pedidos[i]->numero == numero) {
             free(pedidos[i]);
-            for (int j = i; j < contador_pedidos - 1; j++) {
+            for (int j = i; j < contadorPedidos - 1; j++) {
                 pedidos[j] = pedidos[j + 1];
             }
-            contador_pedidos--;
+            contadorPedidos--;
             printf("Pedido excluído com sucesso!\n");
             return;
         }
@@ -108,22 +99,22 @@ void excluir_pedido() {
 }
 
 // Função para buscar pedido por número ou nome
-void buscar_pedido() {
+void buscarPedido() {
     char termo[50];
     int encontrado = 0;
 
     printf("Digite o número ou nome do solicitante: ");
     scanf(" %[^\n]", termo);
 
-    for (int i = 0; i < contador_pedidos; i++) {
-        if (pedidos[i]->numero == atoi(termo) || strstr(pedidos[i]->nome_solicitante, termo)) {
+    for (int i = 0; i < contadorPedidos; i++) {
+        if (pedidos[i]->numero == atoi(termo) || strstr(pedidos[i]->nomeSolicitante, termo)) {
             Pedido *p = pedidos[i];
             printf("\nPedido #%d\n", p->numero);
-            printf("Solicitante: %s\n", p->nome_solicitante);
-            printf("Tipo de solicitante: %s\n", p->tipo_solicitante);
-            printf("Quantidade de páginas: %d\n", p->quantidade_paginas);
-            printf("Data do pedido: %s\n", p->data_pedido);
-            printf("Valor total: R$ %.2f\n", p->valor_total);
+            printf("Solicitante: %s\n", p->nomeSolicitante);
+            printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
+            printf("Quantidade de páginas: %d\n", p->quantidadePaginas);
+            printf("Data do pedido: %s\n", p->dataPedido);
+            printf("Valor total: R$ %.2f\n", p->valorTotal);
             printf("Status: %s\n", p->status);
             encontrado = 1;
         }
@@ -135,38 +126,38 @@ void buscar_pedido() {
 }
 
 // Função para editar um pedido
-void editar_pedido() {
+void editarPedido() {
     int numero;
     printf("Digite o número do pedido que deseja editar: ");
     scanf("%d", &numero);
 
-    for (int i = 0; i < contador_pedidos; i++) {
+    for (int i = 0; i < contadorPedidos; i++) {
         if (pedidos[i]->numero == numero) {
             Pedido *p = pedidos[i];
             printf("Editando pedido #%d\n", p->numero);
 
-            printf("Nome do solicitante atual: %s\n", p->nome_solicitante);
+            printf("Nome do solicitante atual: %s\n", p->nomeSolicitante);
             printf("Digite o novo nome do solicitante (ou pressione enter para manter o atual): ");
             char novo_nome[50];
             scanf(" %[^\n]", novo_nome);
             if (strcmp(novo_nome, "") != 0) {
-                strcpy(p->nome_solicitante, novo_nome);
+                strcpy(p->nomeSolicitante, novo_nome);
             }
 
-            printf("Quantidade de páginas atual: %d\n", p->quantidade_paginas);
+            printf("Quantidade de páginas atual: %d\n", p->quantidadePaginas);
             printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
-            int nova_quantidade;
-            scanf("%d", &nova_quantidade);
-            if (nova_quantidade > 0) {
-                p->quantidade_paginas = nova_quantidade;
-                p->valor_total = nova_quantidade * PRECO_POR_PAGINA;
+            int novaQuantidade;
+            scanf("%d", &novaQuantidade);
+            if (novaQuantidade > 0) {
+                p->quantidadePaginas = novaQuantidade;
+                p->valorTotal = novaQuantidade * PRECO_POR_PAGINA;
             }
 
             printf("Status atual: %s\n", p->status);
             printf("Digite o novo status (Pendente, Concluído, Cancelado): ");
-            char novo_status[20];
-            scanf(" %[^\n]", novo_status);
-            strcpy(p->status, novo_status);
+            char novoStatus[20];
+            scanf(" %[^\n]", novoStatus);
+            strcpy(p->status, novoStatus);
 
             printf("Pedido atualizado com sucesso!\n");
             return;
@@ -176,22 +167,22 @@ void editar_pedido() {
 }
 
 // Função para consultar pedidos por status
-void consultar_pedidos_por_status() {
+void consultarPedidosPorStatus() {
     char status[20];
     int encontrado = 0;
 
     printf("Digite o status (Pendente, Concluído, Cancelado): ");
     scanf(" %[^\n]", status);
 
-    for (int i = 0; i < contador_pedidos; i++) {
+    for (int i = 0; i < contadorPedidos; i++) {
         if (strcmp(pedidos[i]->status, status) == 0) {
             Pedido *p = pedidos[i];
             printf("\nPedido #%d\n", p->numero);
-            printf("Solicitante: %s\n", p->nome_solicitante);
-            printf("Tipo de solicitante: %s\n", p->tipo_solicitante);
-            printf("Quantidade de páginas: %d\n", p->quantidade_paginas);
-            printf("Data do pedido: %s\n", p->data_pedido);
-            printf("Valor total: R$ %.2f\n", p->valor_total);
+            printf("Solicitante: %s\n", p->nomeSolicitante);
+            printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
+            printf("Quantidade de páginas: %d\n", p->quantidadePaginas);
+            printf("Data do pedido: %s\n", p->dataPedido);
+            printf("Valor total: R$ %.2f\n", p->valorTotal);
             printf("Status: %s\n", p->status);
             encontrado = 1;
         }
@@ -203,22 +194,22 @@ void consultar_pedidos_por_status() {
 }
 
 // Função para calcular total de cópias realizadas e valor arrecadado
-void consultar_total_copias_valor() {
-    int total_paginas = 0;
-    float total_valor = 0.0;
+void consultarTotalCopiasValor() {
+    int totalPaginas = 0;
+    float totalValor = 0.0;
 
-    for (int i = 0; i < contador_pedidos; i++) {
-        total_paginas += pedidos[i]->quantidade_paginas;
-        total_valor += pedidos[i]->valor_total;
+    for (int i = 0; i < contadorPedidos; i++) {
+        totalPaginas += pedidos[i]->quantidadePaginas;
+        totalValor += pedidos[i]->valorTotal;
     }
 
-    printf("Total de cópias realizadas: %d\n", total_paginas);
-    printf("Valor total arrecadado: R$ %.2f\n", total_valor);
+    printf("Total de cópias realizadas: %d\n", totalPaginas);
+    printf("Valor total arrecadado: R$ %.2f\n", totalValor);
 }
 
 // Função para liberar memória alocada para os pedidos
-void liberar_memoria() {
-    for (int i = 0; i < contador_pedidos; i++) {
+void liberarMemoria() {
+    for (int i = 0; i < contadorPedidos; i++) {
         free(pedidos[i]);
     }
     free(pedidos);
@@ -243,43 +234,32 @@ void menu() {
 
         switch (opcao) {
             case 1:
-                adicionar_pedido();
+                adicionarPedido();
                 break;
             case 2:
-                excluir_pedido();
+                excluirPedido();
                 break;
             case 3:
-                listar_pedidos();
+                listarPedidos();
                 break;
             case 4:
-                buscar_pedido();
+                buscarPedido();
                 break;
             case 5:
-                editar_pedido();
+                editarPedido();
                 break;
             case 6:
-                consultar_pedidos_por_status();
+                consultarPedidosPorStatus();
                 break;
             case 7:
-                consultar_total_copias_valor();
+                consultarTotalCopiasValor();
                 break;
             case 8:
-                liberar_memoria();
+                liberarMemoria();
                 printf("Saindo...\n");
                 break;
             default:
                 printf("Opção inválida!\n");
         }
     } while (opcao != 8);
-}
-
-int main() {
-    pedidos = (Pedido **)malloc(capacidade * sizeof(Pedido *));
-    if (pedidos == NULL) {
-        printf("Erro ao alocar memória!\n");
-        return 1;
-    }
-
-    menu();
-    return 0;
 }
