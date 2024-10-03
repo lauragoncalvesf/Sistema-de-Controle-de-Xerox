@@ -41,7 +41,7 @@ void adicionarPedido() {
     Pedido *novoPedido = pedidos[contadorPedidos];
     novoPedido->numero = contadorPedidos + 1;
 
-    printf("Nome do solicitante: ");
+    printf("\nNome do solicitante: ");
     scanf(" %[^\n]", novoPedido->nomeSolicitante);
 
     printf("Tipo de solicitante (Aluno, Professor, Funcionario): ");
@@ -55,7 +55,7 @@ void adicionarPedido() {
     strcpy(novoPedido->status, "Pendente");
 
     contadorPedidos++;
-    printf("Pedido adicionado com sucesso!\n");
+    printf("\nPedido adicionado com sucesso!\n");
 }
 
 // Função para listar todos os pedidos
@@ -88,6 +88,7 @@ void excluirPedido() {
             free(pedidos[i]);
             for (int j = i; j < contadorPedidos - 1; j++) {
                 pedidos[j] = pedidos[j + 1];
+                pedidos[j]->numero = j + 1;
             }
             contadorPedidos--;
             printf("Pedido excluído com sucesso!\n");
