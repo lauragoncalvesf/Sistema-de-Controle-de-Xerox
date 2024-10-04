@@ -52,7 +52,7 @@ void obterEntradaValida(char *buffer, int tamanho, const char *prompt) {
 void obterTipoSolicitante(Pedido *pedido){
     int opcao;
     while (1) {
-        printf("-> Tipo de solicitante:\n 1. Aluno\n 2. Professor\n 3. Funcionário\n Escolha uma opção: ");
+        printf("Tipo de solicitante:\n 1. Aluno\n 2. Professor\n 3. Funcionário\n Escolha uma opção: ");
         scanf("%d", &opcao);
         getchar(); // Limpa o caractere de nova linha do buffer
 
@@ -85,10 +85,10 @@ void adicionarPedido() {
     Pedido *novoPedido = pedidos[contadorPedidos];
     novoPedido->numero = contadorPedidos + 1;
 
-    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "-> Nome do solicitante: ");
+    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "\nNome do solicitante: ");
     obterTipoSolicitante(novoPedido);
 
-    printf("-> Quantidade de páginas: ");
+    printf("Quantidade de páginas: ");
     while(scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0){
         printf("Entrada inválida! Por favor, insira um número positivo: ");
         while(getchar() != '\n');
@@ -126,7 +126,7 @@ void excluirPedido() {
     char entrada[50];
 
     while(1){
-        printf("Digite o número do pedido que deseja excluir: ");
+        printf("\nDigite o número do pedido que deseja excluir: ");
         fgets(entrada, sizeof(entrada), stdin);
         entrada[strcspn(entrada, "\n")] = '\0';
 
@@ -162,8 +162,10 @@ void buscarPedido() {
     char termo[50];
     int encontrado = 0;
 
-    printf("Digite o número ou nome do solicitante: ");
+    printf("\nDigite o número ou nome do solicitante: ");
     scanf(" %[^\n]", termo);
+    getchar();
+
     // Verifica se a entrada é um número
     if(apenasNumeros(termo)){
         int numero = atoi(termo);
@@ -182,9 +184,22 @@ void buscarPedido() {
             }
         }            
     }else{
-        //Busca pelo nome do solicitante
+        //Busca pelo nome do solicitante (ignorando maiusculas/minusculas)
         for (int i = 0; i < contadorPedidos; i++){
-            if(strstr(pedidos[i]->nomeSolicitante, termo) != NULL){
+            char nomeSolicitanteLower[50];
+            char termoLower[50];
+
+            // Converte os nomes para minúsculas para busca case-insensitive
+            strcpy(nomeSolicitanteLower, pedidos[i]->nomeSolicitante);
+            strcpy(termoLower, termo);
+            for(int j = 0; nomeSolicitanteLower[j]; j++){
+                nomeSolicitanteLower[j] = tolower(nomeSolicitanteLower[j]);
+            }
+            for(int j = 0; termoLower[j]; j++){
+                termoLower[j] = tolower(termoLower[j]);
+            }
+
+            if(strstr(nomeSolicitanteLower, termoLower) != NULL){
                 Pedido * p = pedidos[i];
                 printf("\nPedido #%d\n", p->numero);
                 printf("Solicitante: %s\n", p->nomeSolicitante);
@@ -225,7 +240,7 @@ void obterNovoStatus(char *status) {
                 strcpy(status, "Cancelado");
                 return;
             default:
-                printf("Escolha inválida! Tente novamente: ");
+                printf("Escolha inválida! Tente novamente.\n");
                 break;
         }
     }
@@ -236,7 +251,7 @@ void editarPedido() {
     int numero = -1;
 
     while(1){
-        printf("Digite o número do pedido que deseja editar: ");
+        printf("\nDigite o número do pedido que deseja editar: ");
         fgets(entrada, sizeof(entrada), stdin);
         entrada[strcspn(entrada, "\n")] = '\0';
 
@@ -318,7 +333,7 @@ void editarPedido() {
 void consultarPedidosPorStatus() {
     char status[MAX_STATUS];
     int encontrado = 0;
-    obterEntradaValida(status, MAX_STATUS, "Digite o status (Pendente, Concluído, Cancelado): ");
+    obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
 
     for (int i = 0; i < contadorPedidos; i++) {
         if (strcmp(pedidos[i]->status, status) == 0) {
