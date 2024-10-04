@@ -429,5 +429,3 @@ int obterOpcaoMenu() {
 
     return opcao;
 }
-
-
