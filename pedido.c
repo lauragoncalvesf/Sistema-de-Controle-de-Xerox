@@ -159,6 +159,10 @@ void excluirPedido() {
 }
 
 void buscarPedido() {
+    if(contadorPedidos == 0){
+        printf("Nenhum pedido registrado.\n");
+        return;
+    }
     char termo[50];
     int encontrado = 0;
 
@@ -247,6 +251,11 @@ void obterNovoStatus(char *status) {
 }
 
 void editarPedido() {
+    if(contadorPedidos == 0){
+        printf("Nenhum pedido registrado.\n");
+        return;
+    }
+
     char entrada[20];
     int numero = -1;
 
@@ -331,6 +340,10 @@ void editarPedido() {
 }
 
 void consultarPedidosPorStatus() {
+    if(contadorPedidos == 0){
+        printf("Nenhum pedido registrado.\n");
+        return;
+    }
     char status[MAX_STATUS];
     int encontrado = 0;
     obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
@@ -355,6 +368,10 @@ void consultarPedidosPorStatus() {
 }
 
 void consultarTotalCopiasValor() {
+    if(contadorPedidos == 0){
+        printf("Nenhum pedido registrado.\n");
+        return;
+    }
     int totalPaginas = 0;
     float totalValor = 0.0;
 
