@@ -7,7 +7,7 @@ int main() {
         printf("Erro ao alocar memória!\n");
         return 1;
     }
-    do {
+    while(1) {
         printf("\n----- | Menu de Pedidos | -----\n\n");
         printf("1. Adicionar pedido\n");
         printf("2. Listar pedidos\n");
@@ -16,9 +16,9 @@ int main() {
         printf("5. Editar pedido\n");
         printf("6. Consultar pedidos por status\n");
         printf("7. Consultar total de cópias e valor arrecadado\n");
-        printf("0. Sair\n\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
+        printf("8. Sair\n\n");
+    
+        opcao = obterOpcaoMenu();
 
         switch (opcao) {
             case 1:
@@ -42,13 +42,14 @@ int main() {
             case 7:
                 consultarTotalCopiasValor();
                 break;
-            case 0:
+            case 8:
                 liberarMemoria();
                 printf("Saindo...\n");
-                break;
+                exit(0);
             default:
                 printf("Opção inválida!\n");
+                break;
         }
-    } while (opcao != 0);
+    }
     return 0;
 }
