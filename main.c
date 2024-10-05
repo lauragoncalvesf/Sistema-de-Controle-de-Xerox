@@ -1,8 +1,10 @@
 #include "pedido.c"
 
 int main() {
-    int opcao;
+    int opcao = -1;
     pedidos = (Pedido **)malloc(capacidade * sizeof(Pedido *));
+    carregarPedidosDoArquivo();
+
     if (pedidos == NULL) {
         printf("Erro ao alocar memória!\n");
         return 1;
@@ -43,6 +45,7 @@ int main() {
                 consultarTotalCopiasValor();
                 break;
             case 8:
+                salvarPedidosNoArquivo();
                 liberarMemoria();
                 printf("Saindo...\n");
                 exit(0);

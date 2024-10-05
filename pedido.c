@@ -9,6 +9,81 @@
 Pedido **pedidos = NULL;  // Ponteiro para ponteiro de Pedido
 int contadorPedidos = 0; // Contador de pedidos
 int capacidade = 100;      // Capacidade inicial
+const char *ARQUIVO_PEDIDOS = "pedido.txt";
+
+void carregarPedidosDoArquivo(){
+    FILE * arquivo = fopen(ARQUIVO_PEDIDOS, "r");
+
+    if(arquivo == NULL){
+        printf("Nenhum arquivo de pedidos encontrado. Iniciando com uma lista vazia.\n");
+        return;
+    }
+
+    pedidos = malloc(capacidade * sizeof(Pedido *));
+    if(pedidos == NULL){
+        printf("Erro ao alocar memória!\n");
+        exit(1);
+    }
+    
+    while(!feof(arquivo)){
+        Pedido * novoPedido = (Pedido *)malloc(sizeof(Pedido));
+        if(novoPedido == NULL){
+            printf("Erro ao alocar memória para o pedido!\n");
+            exit(1);
+        }
+        
+        
+        if (fscanf(arquivo, "Número: %d\n", &novoPedido->numero) == 1 &&
+            fgets(novoPedido->nomeSolicitante, MAX_NOME, arquivo) &&
+            fgets(novoPedido->tipoSolicitante, MAX_NOME, arquivo) &&
+            fscanf(arquivo, "Quantidade de Páginas: %d\n", &novoPedido->quantidadePaginas) == 1 &&
+            fscanf(arquivo, "Data do Pedido: %s\n", novoPedido->dataPedido) == 1 &&
+            fscanf(arquivo, "Valor Total: %f\n", &novoPedido->valorTotal) == 1 &&
+            fscanf(arquivo, "Status: %s\n\n", novoPedido->status) == 1) {
+                novoPedido->nomeSolicitante[strcspn(novoPedido->nomeSolicitante, "\n")] = '\0';
+                novoPedido->tipoSolicitante[strcspn(novoPedido->tipoSolicitante, "\n")] = '\0';
+
+                if(contadorPedidos >= capacidade){
+                    redimensionarPedidos();
+                }
+                pedidos[contadorPedidos++] = novoPedido;
+        }else{
+            free(novoPedido);
+        }
+    }
+    fclose(arquivo);
+}
+
+void salvarPedidosNoArquivo(){
+    FILE *arquivo = fopen(ARQUIVO_PEDIDOS, "w");
+
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo para salvar os pedidos!\n");
+        return;
+    }
+
+    for(int i = 0; i < contadorPedidos; i++){
+        Pedido * p = pedidos[i];
+        fprintf(arquivo, "Número: %02d\n", p->numero);
+        fprintf(arquivo, "Nome do Solicitante: %s\n", p->nomeSolicitante);
+        fprintf(arquivo, "Tipo de Solicitante: %s\n", p->tipoSolicitante);
+        fprintf(arquivo, "Quantidade de Páginas: %d\n", p->quantidadePaginas);
+        fprintf(arquivo, "Data do Pedido: %s\n", p->dataPedido);
+        fprintf(arquivo, "Valor Total: %.2f\n", p->valorTotal);
+        fprintf(arquivo, "Status: %s\n\n", p->status);
+    }
+    fclose(arquivo);
+}
+
+void inserirPedidoOrdenado(Pedido * novoPedido){
+    int i = contadorPedidos - 1;
+    while(i >= 0 && strcmp(pedidos[i]->dataPedido, novoPedido->dataPedido) > 0){
+        pedidos[i + 1] = pedidos[i];
+        i--;
+    }
+    pedidos[i + 1] = novoPedido;
+    contadorPedidos++;
+} 
 
 void obterData(char *data) {
     time_t t = time(NULL);
@@ -76,31 +151,44 @@ void adicionarPedido() {
         redimensionarPedidos();
     }
 
-    pedidos[contadorPedidos] = (Pedido *)malloc(sizeof(Pedido));
-    if (pedidos[contadorPedidos] == NULL) {
+    Pedido * novoPedido = (Pedido *) malloc(sizeof(Pedido));
+    if(novoPedido == NULL){
         printf("Erro ao alocar memória!\n");
-        exit(1);
+        return;
     }
 
-    Pedido *novoPedido = pedidos[contadorPedidos];
     novoPedido->numero = contadorPedidos + 1;
-
-    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "\nNome do solicitante: ");
+    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "Nome do solicitante: ");
     obterTipoSolicitante(novoPedido);
 
     printf("Quantidade de páginas: ");
-    while(scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0){
+    while (scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0) {
         printf("Entrada inválida! Por favor, insira um número positivo: ");
-        while(getchar() != '\n');
+        while (getchar() != '\n');
     }
-    getchar();
+    getchar();  // Limpar buffer
 
     obterData(novoPedido->dataPedido);
     novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
     strcpy(novoPedido->status, "Pendente");
 
+    int posicao = contadorPedidos;
+    for(int i = 0; i< contadorPedidos; i++){
+        if(novoPedido->numero < pedidos[i]->numero){
+            posicao = i; 
+            break;
+        }
+    }
+
+    for(int i = contadorPedidos; i > posicao; i--){
+        pedidos[i] = pedidos[i - 1];
+    }
+
+    pedidos[posicao] = novoPedido;
     contadorPedidos++;
-    printf("\nPedido adicionado com sucesso!\n");
+
+    salvarPedidosNoArquivo();
+    printf("Pedido adicionado com sucesso!\n");
 }
 
 void listarPedidos() {
@@ -155,6 +243,7 @@ void excluirPedido() {
             return;
         }
     }
+    salvarPedidosNoArquivo();
     printf("Pedido não encontrado.\n");
 }
 
@@ -251,6 +340,41 @@ void obterNovoStatus(char *status) {
 }
 
 void editarPedido() {
+    int numero;
+    printf("Digite o número do pedido que deseja editar: ");
+    scanf("%d", &numero);
+    getchar();  // Limpar buffer
+
+    for (int i = 0; i < contadorPedidos; i++) {
+        if (pedidos[i]->numero == numero) {
+            Pedido *p = pedidos[i];
+            printf("Editando pedido #%d\n", p->numero);
+
+            printf("Nome atual: %s\n", p->nomeSolicitante);
+            obterEntradaValida(p->nomeSolicitante, MAX_NOME, "Novo nome (ou pressione Enter para manter o atual): ");
+
+            printf("Quantidade de páginas atual: %d\n", p->quantidadePaginas);
+            printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
+            int novasPaginas;
+            scanf("%d", &novasPaginas);
+            getchar();  // Limpar buffer
+            if (novasPaginas > 0) {
+                p->quantidadePaginas = novasPaginas;
+                p->valorTotal = novasPaginas * PRECO_POR_PAGINA;
+            }
+
+            printf("Status atual: %s\n", p->status);
+            obterEntradaValida(p->status, MAX_STATUS, "Novo status (ou pressione Enter para manter o atual): ");
+
+            salvarPedidosNoArquivo();
+            printf("Pedido atualizado com sucesso!\n");
+            return;
+        }
+    }
+    printf("Pedido não encontrado.\n");
+}
+
+/*void editarPedido() {
     if(contadorPedidos == 0){
         printf("Nenhum pedido registrado.\n");
         return;
@@ -337,7 +461,7 @@ void editarPedido() {
         }
     }
     printf("Pedido não encontrado.\n");
-}
+}*/
 
 void consultarPedidosPorStatus() {
     if(contadorPedidos == 0){

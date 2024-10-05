@@ -69,4 +69,10 @@ void obterTipoSolicitante(Pedido *pedido);
 // Função para obter entrada de string com validação
 void obterEntradaValida(char *buffer, int tamanho, const char *prompt);
 
+// Função para carregar pedidos do arquivo
+void carregarPedidosDoArquivo();
+
+// Função para salvar pedidos no arquivo
+void salvarPedidosNoArquivo();
+
 #endif
