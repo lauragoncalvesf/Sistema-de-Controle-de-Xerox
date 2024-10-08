@@ -4,7 +4,7 @@
 #define MAX_NOME 50
 #define MAX_STATUS 50
 #define PRECO_POR_PAGINA 0.20
-#define DESCONTO 
+#define DESCONTO
 
 
 typedef struct{

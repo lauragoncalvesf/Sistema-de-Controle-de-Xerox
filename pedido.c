@@ -159,30 +159,33 @@ void adicionarPedido() {
         redimensionarPedidos();
     }
 
-    Pedido * novoPedido = (Pedido *) malloc(sizeof(Pedido));
-    if(novoPedido == NULL){
+    pedidos[contadorPedidos] = (Pedido *)malloc(sizeof(Pedido));
+    if (pedidos[contadorPedidos] == NULL) {
         printf("Erro ao alocar memória!\n");
-        return;
+        exit(1);
     }
 
+    Pedido *novoPedido = pedidos[contadorPedidos];
     novoPedido->numero = contadorPedidos + 1;
-    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "Nome do solicitante: ");
+
+    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "\nNome do solicitante: ");
     obterTipoSolicitante(novoPedido);
 
     printf("Quantidade de páginas: ");
-    while (scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0) {
+    while(scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0){
         printf("Entrada inválida! Por favor, insira um número positivo: ");
-        while (getchar() != '\n');
+        while(getchar() != '\n');
     }
-    getchar();  // Limpar buffer
-
+    getchar();
+    
     obterData(novoPedido->dataPedido);
+    //calcula o valor total sem desconto
     novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
     
-    if(novoPedido->quantidadePaginas > 50){
+        if(novoPedido->quantidadePaginas > 50){
         novoPedido->valorTotal *= 0.9;
+        
     }
-    
     strcpy(novoPedido->status, "Pendente");
 
     int posicao = contadorPedidos;
@@ -197,11 +200,10 @@ void adicionarPedido() {
         pedidos[i] = pedidos[i - 1];
     }
 
-    pedidos[posicao] = novoPedido;
-    contadorPedidos++;
+    strcpy(novoPedido->status, "Pendente");
 
-    salvarPedidosNoArquivo();
-    printf("Pedido adicionado com sucesso!\n");
+    contadorPedidos++;
+    printf("\nPedido adicionado com sucesso!\n");
 }
 
 void listarPedidos() {
