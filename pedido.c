@@ -110,13 +110,21 @@ int possuiLetra(const char *str) {
 }
 
 void obterEntradaValida(char *buffer, int tamanho, const char *prompt) {
+    char entradaTemp[tamanho];
+
     while (1) {
         printf("%s", prompt);
-        fgets(buffer, tamanho, stdin);
-        buffer[strcspn(buffer, "\n")] = 0;  // Remove o '\n'
+        fgets(entradaTemp, tamanho, stdin);
+        entradaTemp[strcspn(entradaTemp, "\n")] = 0;  // Remove o '\n'
 
-        // Verifica se a entrada não está vazia
-        if (strlen(buffer) > 0 && possuiLetra(buffer)) {
+        // Verifica se o usuário apenas pressionou Enter
+        if (strlen(entradaTemp) == 0) {
+            break;
+        }
+
+        // Verifica se a entrada contém ao menos uma letra
+        if (strlen(entradaTemp) > 0 && possuiLetra(entradaTemp)) {
+            strcpy(buffer, entradaTemp);
             break;
         } else {
             printf("Entrada inválida! Por favor, insira um valor.\n");
@@ -170,6 +178,11 @@ void adicionarPedido() {
 
     obterData(novoPedido->dataPedido);
     novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
+    
+    if(novoPedido->quantidadePaginas > 50){
+        novoPedido->valorTotal *= 0.9;
+    }
+    
     strcpy(novoPedido->status, "Pendente");
 
     int posicao = contadorPedidos;
@@ -310,11 +323,11 @@ void buscarPedido() {
     }
 }
 
-void obterNovoStatus(char *status) {
+void Status(char *status) {
     int escolha = 0;
 
     while (1) {
-        printf("Escolha o novo status:\n");
+        printf("Escolha o status:\n");
         printf(" 1. Pendente\n");
         printf(" 2. Concluído\n");
         printf(" 3. Cancelado\n");
@@ -333,11 +346,47 @@ void obterNovoStatus(char *status) {
                 strcpy(status, "Cancelado");
                 return;
             default:
-                printf("Escolha inválida! Tente novamente.\n");
+                printf("\n Escolha inválida! Tente novamente.\n");
                 break;
         }
     }
 }
+
+void obterNovoStatus(char *status) {
+    int escolha = 0;
+    char entrada[3]; // Para capturar o Enter ou uma escolha
+
+    while (1) {
+        printf("Escolha o status (ou pressione Enter para manter o status atual):\n");
+        printf(" 1. Pendente\n");
+        printf(" 2. Concluído\n");
+        printf(" 3. Cancelado\n");
+        printf(" Digite a opção (1-3): ");
+        fgets(entrada, sizeof(entrada), stdin); // Captura a entrada
+
+        if (entrada[0] == '\n') {  // Verifica se o usuário pressionou Enter
+            return;
+        }
+
+        escolha = atoi(entrada); // Converte para inteiro
+
+        switch (escolha) {
+            case 1:
+                strcpy(status, "Pendente");
+                return;
+            case 2:
+                strcpy(status, "Concluído");
+                return;
+            case 3:
+                strcpy(status, "Cancelado");
+                return;
+            default:
+                printf("\nEscolha inválida! Tente novamente.\n");
+                break;
+        }
+    }
+}
+
 
 void editarPedido() {
     int numero;
@@ -361,10 +410,15 @@ void editarPedido() {
             if (novasPaginas > 0) {
                 p->quantidadePaginas = novasPaginas;
                 p->valorTotal = novasPaginas * PRECO_POR_PAGINA;
+
+                if(p->quantidadePaginas > 50){
+                    p->valorTotal *= 0.9;
+                }
             }
+        
 
             printf("Status atual: %s\n", p->status);
-            obterEntradaValida(p->status, MAX_STATUS, "Novo status (ou pressione Enter para manter o atual): ");
+            obterNovoStatus(p->status);
 
             salvarPedidosNoArquivo();
             printf("Pedido atualizado com sucesso!\n");
@@ -374,103 +428,17 @@ void editarPedido() {
     printf("Pedido não encontrado.\n");
 }
 
-/*void editarPedido() {
-    if(contadorPedidos == 0){
-        printf("Nenhum pedido registrado.\n");
-        return;
-    }
-
-    char entrada[20];
-    int numero = -1;
-
-    while(1){
-        printf("\nDigite o número do pedido que deseja editar: ");
-        fgets(entrada, sizeof(entrada), stdin);
-        entrada[strcspn(entrada, "\n")] = '\0';
-
-        if(apenasNumeros(entrada)){
-            numero = atoi(entrada);
-            if(numero > 0 && numero <= contadorPedidos){
-                break; // Número válido, sai do loop
-            }else{
-                printf("Número de pedido inexistente. Tente novamente.\n");
-            }
-        }else{
-            printf("Entrada inválida! Por favor, insira um número.\n");
-        }
-    }
-
-    for (int i = 0; i < contadorPedidos; i++) {
-        if (pedidos[i]->numero == numero) {
-            Pedido * p = pedidos[i];
-            printf("Editando pedido #%d\n", p->numero);
-
-            //Nome do solicitante
-            printf("Nome do solicitante atual: %s\n", p->nomeSolicitante);
-            char novoNome[MAX_NOME];
-
-            while(1){ //Loop para garantir uma entrada valida
-                printf("Digite o novo nome do solicitante (ou pressione enter para manter o atual): ");
-                fgets(novoNome, sizeof(novoNome), stdin);
-                novoNome[strcspn(novoNome, "\n")] = 0;
-
-
-                // se a entrada estiver vazia, mantemos o nome atual
-                if(strlen(novoNome) == 0){
-                    break;
-                }
-
-                // Verifica se o novo nome contem apenas letras
-                if(strlen(novoNome) > 0){
-                    strcpy(p->nomeSolicitante, novoNome);
-                    break;
-                }else{
-                        printf("Nome inválido! O nome deve conter apenas letras.\n");
-                    }
-            }
-
-            // Quantidade de páginas
-            while(1){
-                printf("Quantidade de páginas atual: %d\n", p->quantidadePaginas);
-                printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
-                fgets(entrada, sizeof(entrada), stdin);
-                entrada[strcspn(entrada, "\n")] = '\0';
-
-                if(apenasNumeros(entrada)){
-                    int novaQuantidade = atoi(entrada);
-                    if(novaQuantidade >= 0){
-                        if(novaQuantidade > 0){
-                            p->quantidadePaginas = novaQuantidade;
-                            p->valorTotal = novaQuantidade * PRECO_POR_PAGINA;
-                        }
-                        break;
-                    }else{
-                        printf("Quantidade de páginas não pode ser negativa. Tente novamente.\n");
-                    }
-                }else{
-                    printf("Entrada inválida! Por favor, insira um número inteiro.\n");
-                }
-            }
-
-            // Status
-            printf("Status atual: %s\n", p->status);
-            obterNovoStatus(p->status);
-
-            printf("Pedido atualizado com sucesso!\n");
-            return;
-        }
-    }
-    printf("Pedido não encontrado.\n");
-}*/
-
 void consultarPedidosPorStatus() {
     if(contadorPedidos == 0){
         printf("Nenhum pedido registrado.\n");
         return;
     }
+
     char status[MAX_STATUS];
     int encontrado = 0;
-    obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
+    //obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
+
+        Status(status);
 
     for (int i = 0; i < contadorPedidos; i++) {
         if (strcmp(pedidos[i]->status, status) == 0) {
