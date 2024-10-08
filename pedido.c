@@ -5,185 +5,175 @@
 #include <ctype.h>
 #include <time.h>
 
-
-Pedido **pedidos = NULL;  // Ponteiro para ponteiro de Pedido
+Pedido **pedidos = NULL; // Ponteiro para ponteiro de Pedido
 int contadorPedidos = 0; // Contador de pedidos
-int capacidade = 100;      // Capacidade inicial
+int capacidade = 100;    // Capacidade inicial
 const char *ARQUIVO_PEDIDOS = "pedido.txt";
 
-void carregarPedidosDoArquivo(){
+void carregarPedidosDoArquivo()
+{
     FILE *arquivo = fopen(ARQUIVO_PEDIDOS, "r");
 
-    if(arquivo == NULL){
+    if (arquivo == NULL)
+    {
         printf("Nenhum arquivo de pedidos encontrado. Iniciando com uma lista vazia.\n");
         return;
     }
 
-    // Inicialize a lista de pedidos apenas se não estiver inicializada ainda
-    if (pedidos == NULL) {
-        pedidos = malloc(capacidade * sizeof(Pedido *));
-        if(pedidos == NULL){
-            printf("Erro ao alocar memória!\n");
-            exit(1);
-        }
+    pedidos = malloc(capacidade * sizeof(Pedido *));
+    if (pedidos == NULL)
+    {
+        printf("Erro ao alocar memória!\n");
+        exit(1);
     }
 
-    while(1) {
+    while (!feof(arquivo))
+    {
         Pedido *novoPedido = (Pedido *)malloc(sizeof(Pedido));
-        if(novoPedido == NULL){
+        if (novoPedido == NULL)
+        {
             printf("Erro ao alocar memória para o pedido!\n");
             exit(1);
         }
 
-        // Leitura do número do pedido
-        if (fscanf(arquivo, "Número: %d\n", &novoPedido->numero) != 1) {
-            free(novoPedido);
-            break; // Saia do loop se não conseguir ler o número do pedido (fim do arquivo)
-        }
+        fscanf(arquivo, "Número: %d\n", &novoPedido->numero);
+        fscanf(arquivo, "Nome do Solicitante: %[^\n]\n", novoPedido->nomeSolicitante);
+        fscanf(arquivo, "Tipo de Solicitante: %[^\n]\n", novoPedido->tipoSolicitante);
+        fscanf(arquivo, "Quantidade de Páginas: %d\n", &novoPedido->quantidadePaginas);
+        fscanf(arquivo, "Data do Pedido: %s\n", novoPedido->dataPedido);
+        fscanf(arquivo, "Valor Total: %f\n", &novoPedido->valorTotal);
+        fscanf(arquivo, "Status: %s\n\n", novoPedido->status);
 
-        // Leitura do nome e tipo do solicitante
-        if (!fgets(novoPedido->nomeSolicitante, MAX_NOME, arquivo) ||
-            !fgets(novoPedido->tipoSolicitante, MAX_NOME, arquivo)) {
-            free(novoPedido);
-            break; // Saia do loop se houver falha na leitura
-        }
-
-        // Remover a nova linha '\n' no final das strings lidas com fgets
-        novoPedido->nomeSolicitante[strcspn(novoPedido->nomeSolicitante, "\n")] = '\0';
-        novoPedido->tipoSolicitante[strcspn(novoPedido->tipoSolicitante, "\n")] = '\0';
-
-        // Leitura da quantidade de páginas, data do pedido, valor total e status
-        if (fscanf(arquivo, "Quantidade de Páginas: %d\n", &novoPedido->quantidadePaginas) != 1 ||
-            fscanf(arquivo, "Data do Pedido: %s\n", novoPedido->dataPedido) != 1 ||
-            fscanf(arquivo, "Valor Total: %f\n", &novoPedido->valorTotal) != 1 ||
-            fscanf(arquivo, "Status: %s\n\n", novoPedido->status) != 1) {
-            free(novoPedido);
-            break; // Saia do loop se houver falha na leitura de qualquer campo
-        }
-
-        // Verificar se a lista precisa ser redimensionada
-        if (contadorPedidos >= capacidade) {
+        if (contadorPedidos >= capacidade)
+        {
             redimensionarPedidos();
         }
-
-        // Adicionar o novo pedido à lista
         pedidos[contadorPedidos++] = novoPedido;
     }
-
     fclose(arquivo);
-    printf("Pedidos carregados com sucesso! Total de pedidos: %d\n", contadorPedidos);
 }
 
-void salvarPedidosNoArquivo(){
+void salvarPedidosNoArquivo()
+{
     FILE *arquivo = fopen(ARQUIVO_PEDIDOS, "w");
 
-    if(arquivo == NULL){
-        printf("Erro ao abrir o arquivo de pedidos para escrita!\n");
+    if (arquivo == NULL)
+    {
+        printf("Erro ao abrir o arquivo para salvar os pedidos!\n");
         return;
     }
 
-    // Percorrer todos os pedidos na lista e salvar no arquivo
-    for (int i = 0; i < contadorPedidos; i++) {
-        Pedido *pedido = pedidos[i];
-        fprintf(arquivo, "Número: %d\n", pedido->numero);
-        fprintf(arquivo, "%s\n", pedido->nomeSolicitante);
-        fprintf(arquivo, "%s\n", pedido->tipoSolicitante);
-        fprintf(arquivo, "Quantidade de Páginas: %d\n", pedido->quantidadePaginas);
-        fprintf(arquivo, "Data do Pedido: %s\n", pedido->dataPedido);
-        fprintf(arquivo, "Valor Total: %.2f\n", pedido->valorTotal);
-        fprintf(arquivo, "Status: %s\n\n", pedido->status);
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        Pedido *p = pedidos[i];
+        fprintf(arquivo, "Número: %02d\n", p->numero);
+        fprintf(arquivo, "Nome do Solicitante: %s\n", p->nomeSolicitante);
+        fprintf(arquivo, "Tipo de Solicitante: %s\n", p->tipoSolicitante);
+        fprintf(arquivo, "Quantidade de Páginas: %d\n", p->quantidadePaginas);
+        fprintf(arquivo, "Data do Pedido: %s\n", p->dataPedido);
+        fprintf(arquivo, "Valor Total: %.2f\n", p->valorTotal);
+        fprintf(arquivo, "Status: %s\n\n", p->status);
     }
-
     fclose(arquivo);
-    printf("Pedidos salvos com sucesso! Total de pedidos: %d\n", contadorPedidos);
 }
 
-void inserirPedidoOrdenado(Pedido * novoPedido){
-    int i = contadorPedidos - 1;
-    while(i >= 0 && strcmp(pedidos[i]->dataPedido, novoPedido->dataPedido) > 0){
-        pedidos[i + 1] = pedidos[i];
-        i--;
-    }
-    pedidos[i + 1] = novoPedido;
-    contadorPedidos++;
-} 
-
-void obterData(char *data) {
+void obterData(char *data){
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     sprintf(data, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
 }
 
-void redimensionarPedidos() {
+void redimensionarPedidos(){
     capacidade *= 2;
     pedidos = realloc(pedidos, capacidade * sizeof(Pedido *));
-    if (pedidos == NULL) {
+    if (pedidos == NULL)
+    {
         printf("Erro ao alocar memória!\n");
         exit(1);
     }
 }
 
-int possuiLetra(const char *str) {
-    for (int i = 0; i < strlen(str); i++) {
-        if (isalpha(str[i])) {
-            return 1;  // Contém pelo menos uma letra
+int possuiLetra(const char *str){
+    for (int i = 0; i < strlen(str); i++)
+    {
+        if (isalpha(str[i]))
+        {
+            return 1; // Contém pelo menos uma letra
         }
     }
-    return 0;  // Não contém letras
+    return 0; // Não contém letras
 }
 
-void obterEntradaValida(char *buffer, int tamanho, const char *prompt) {
+void obterEntradaValida(char *buffer, int tamanho, const char *prompt)
+{
     char entradaTemp[tamanho];
 
-    while (1) {
+    while (1)
+    {
         printf("%s", prompt);
         fgets(entradaTemp, tamanho, stdin);
-        entradaTemp[strcspn(entradaTemp, "\n")] = 0;  // Remove o '\n'
+        entradaTemp[strcspn(entradaTemp, "\n")] = 0; // Remove o '\n'
 
         // Verifica se o usuário apenas pressionou Enter
-        if (strlen(entradaTemp) == 0) {
+        if (strlen(entradaTemp) == 0)
+        {
             break;
         }
 
         // Verifica se a entrada contém ao menos uma letra
-        if (strlen(entradaTemp) > 0 && possuiLetra(entradaTemp)) {
+        if (strlen(entradaTemp) > 0 && possuiLetra(entradaTemp))
+        {
             strcpy(buffer, entradaTemp);
             break;
-        } else {
+        }
+        else
+        {
             printf("Entrada inválida! Por favor, insira um valor.\n");
         }
     }
 }
 
-void obterTipoSolicitante(Pedido *pedido){
+void obterTipoSolicitante(Pedido *pedido)
+{
     int opcao;
-    while (1) {
+    while (1)
+    {
         printf("Tipo de solicitante:\n 1. Aluno\n 2. Professor\n 3. Funcionário\n Escolha uma opção: ");
         scanf("%d", &opcao);
         getchar(); // Limpa o caractere de nova linha do buffer
 
-        if (opcao == 1) {
+        if (opcao == 1)
+        {
             strcpy(pedido->tipoSolicitante, "Aluno");
             break;
-        } else if (opcao == 2) {
+        }
+        else if (opcao == 2)
+        {
             strcpy(pedido->tipoSolicitante, "Professor");
             break;
-        } else if (opcao == 3) {
+        }
+        else if (opcao == 3)
+        {
             strcpy(pedido->tipoSolicitante, "Funcionário");
             break;
-        } else {
+        }
+        else
+        {
             printf("Opção inválida! Por favor, escolha 1, 2 ou 3.\n");
         }
     }
 }
 
-void adicionarPedido() {
-    if (contadorPedidos >= capacidade) {
+void adicionarPedido()
+{
+    if (contadorPedidos >= capacidade)
+    {
         redimensionarPedidos();
     }
 
-    Pedido * novoPedido = (Pedido *) malloc(sizeof(Pedido));
-    if(novoPedido == NULL){
+    Pedido *novoPedido = (Pedido *)malloc(sizeof(Pedido));
+    if (novoPedido == NULL)
+    {
         printf("Erro ao alocar memória!\n");
         return;
     }
@@ -193,30 +183,36 @@ void adicionarPedido() {
     obterTipoSolicitante(novoPedido);
 
     printf("Quantidade de páginas: ");
-    while (scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0) {
+    while (scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0)
+    {
         printf("Entrada inválida! Por favor, insira um número positivo: ");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
     }
-    getchar();  // Limpar buffer
+    getchar(); // Limpar buffer
 
     obterData(novoPedido->dataPedido);
     novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
-    
-    if(novoPedido->quantidadePaginas > 50){
+
+    if (novoPedido->quantidadePaginas > 50)
+    {
         novoPedido->valorTotal *= 0.9;
     }
-    
+
     strcpy(novoPedido->status, "Pendente");
 
     int posicao = contadorPedidos;
-    for(int i = 0; i< contadorPedidos; i++){
-        if(novoPedido->numero < pedidos[i]->numero){
-            posicao = i; 
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        if (novoPedido->numero < pedidos[i]->numero)
+        {
+            posicao = i;
             break;
         }
     }
 
-    for(int i = contadorPedidos; i > posicao; i--){
+    for (int i = contadorPedidos; i > posicao; i--)
+    {
         pedidos[i] = pedidos[i - 1];
     }
 
@@ -227,14 +223,17 @@ void adicionarPedido() {
     printf("Pedido adicionado com sucesso!\n");
 }
 
-void listarPedidos() {
-    if (contadorPedidos == 0) {
+void listarPedidos()
+{
+    if (contadorPedidos == 0)
+    {
         printf("Nenhum pedido registrado.\n");
         return;
     }
 
-    for (int i = 0; i < contadorPedidos; i++) {
-        Pedido * p = pedidos[i];
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        Pedido *p = pedidos[i];
         printf("\nPedido #%d\n", p->numero);
         printf("Solicitante: %s\n", p->nomeSolicitante);
         printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
@@ -245,36 +244,46 @@ void listarPedidos() {
     }
 }
 
-void excluirPedido() {
+void excluirPedido()
+{
     int numero;
     char entrada[50];
 
-    while(1){
+    while (1)
+    {
         printf("\nDigite o número do pedido que deseja excluir: ");
         fgets(entrada, sizeof(entrada), stdin);
         entrada[strcspn(entrada, "\n")] = '\0';
 
-        if(apenasNumeros(entrada)){
+        if (apenasNumeros(entrada))
+        {
             numero = atoi(entrada);
             break;
-        }else{
+        }
+        else
+        {
             printf("Entrada inválida! Por favor, insira um número.\n");
         }
     }
 
-    if(numero <= 0 || numero > contadorPedidos){
+    if (numero <= 0 || numero > contadorPedidos)
+    {
         printf("Número de pedido inválido.\n");
         return;
     }
 
-    for (int i = 0; i < contadorPedidos; i++) {
-        if (pedidos[i]->numero == numero) {
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        if (pedidos[i]->numero == numero)
+        {
             free(pedidos[i]);
-            for (int j = i; j < contadorPedidos - 1; j++) {
+            for (int j = i; j < contadorPedidos - 1; j++)
+            {
                 pedidos[j] = pedidos[j + 1];
                 pedidos[j]->numero = j + 1;
             }
             contadorPedidos--;
+            salvarPedidosNoArquivo();
             printf("Pedido excluído com sucesso!\n");
             return;
         }
@@ -283,8 +292,10 @@ void excluirPedido() {
     printf("Pedido não encontrado.\n");
 }
 
-void buscarPedido() {
-    if(contadorPedidos == 0){
+void buscarPedido()
+{
+    if (contadorPedidos == 0)
+    {
         printf("Nenhum pedido registrado.\n");
         return;
     }
@@ -296,11 +307,14 @@ void buscarPedido() {
     getchar();
 
     // Verifica se a entrada é um número
-    if(apenasNumeros(termo)){
+    if (apenasNumeros(termo))
+    {
         int numero = atoi(termo);
-        for (int i = 0; i < contadorPedidos; i++) {
-            if(pedidos[i]->numero == numero){
-                Pedido * p = pedidos[i];
+        for (int i = 0; i < contadorPedidos; i++)
+        {
+            if (pedidos[i]->numero == numero)
+            {
+                Pedido *p = pedidos[i];
                 printf("\nPedido #%d\n", p->numero);
                 printf("Solicitante: %s\n", p->nomeSolicitante);
                 printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
@@ -309,27 +323,33 @@ void buscarPedido() {
                 printf("Valor total: R$ %.2f\n", p->valorTotal);
                 printf("Status: %s\n", p->status);
                 encontrado = 1;
-                break; //sai do loop se encontrado
+                break; // sai do loop se encontrado
             }
-        }            
-    }else{
-        //Busca pelo nome do solicitante (ignorando maiusculas/minusculas)
-        for (int i = 0; i < contadorPedidos; i++){
+        }
+    }
+    else
+    {
+        // Busca pelo nome do solicitante (ignorando maiusculas/minusculas)
+        for (int i = 0; i < contadorPedidos; i++)
+        {
             char nomeSolicitanteLower[50];
             char termoLower[50];
 
             // Converte os nomes para minúsculas para busca case-insensitive
             strcpy(nomeSolicitanteLower, pedidos[i]->nomeSolicitante);
             strcpy(termoLower, termo);
-            for(int j = 0; nomeSolicitanteLower[j]; j++){
+            for (int j = 0; nomeSolicitanteLower[j]; j++)
+            {
                 nomeSolicitanteLower[j] = tolower(nomeSolicitanteLower[j]);
             }
-            for(int j = 0; termoLower[j]; j++){
+            for (int j = 0; termoLower[j]; j++)
+            {
                 termoLower[j] = tolower(termoLower[j]);
             }
 
-            if(strstr(nomeSolicitanteLower, termoLower) != NULL){
-                Pedido * p = pedidos[i];
+            if (strstr(nomeSolicitanteLower, termoLower) != NULL)
+            {
+                Pedido *p = pedidos[i];
                 printf("\nPedido #%d\n", p->numero);
                 printf("Solicitante: %s\n", p->nomeSolicitante);
                 printf("Tipo de solicitante: %s\n", p->tipoSolicitante);
@@ -341,15 +361,18 @@ void buscarPedido() {
             }
         }
     }
-    if (!encontrado) {
+    if (!encontrado)
+    {
         printf("Nenhum pedido encontrado.\n");
     }
 }
 
-void Status(char *status) {
+void Status(char *status)
+{
     int escolha = 0;
 
-    while (1) {
+    while (1)
+    {
         printf("Escolha o status:\n");
         printf(" 1. Pendente\n");
         printf(" 2. Concluído\n");
@@ -358,28 +381,31 @@ void Status(char *status) {
         scanf("%d", &escolha);
         getchar(); // Limpa o buffer
 
-        switch (escolha) {
-            case 1:
-                strcpy(status, "Pendente");
-                return;
-            case 2:
-                strcpy(status, "Concluído");
-                return;
-            case 3:
-                strcpy(status, "Cancelado");
-                return;
-            default:
-                printf("\n Escolha inválida! Tente novamente.\n");
-                break;
+        switch (escolha)
+        {
+        case 1:
+            strcpy(status, "Pendente");
+            return;
+        case 2:
+            strcpy(status, "Concluído");
+            return;
+        case 3:
+            strcpy(status, "Cancelado");
+            return;
+        default:
+            printf("\n Escolha inválida! Tente novamente.\n");
+            break;
         }
     }
 }
 
-void obterNovoStatus(char *status) {
+void obterNovoStatus(char *status)
+{
     int escolha = 0;
     char entrada[3]; // Para capturar o Enter ou uma escolha
 
-    while (1) {
+    while (1)
+    {
         printf("Escolha o status (ou pressione Enter para manter o status atual):\n");
         printf(" 1. Pendente\n");
         printf(" 2. Concluído\n");
@@ -387,38 +413,41 @@ void obterNovoStatus(char *status) {
         printf(" Digite a opção (1-3): ");
         fgets(entrada, sizeof(entrada), stdin); // Captura a entrada
 
-        if (entrada[0] == '\n') {  // Verifica se o usuário pressionou Enter
+        if (entrada[0] == '\n')
+        { // Verifica se o usuário pressionou Enter
             return;
         }
 
         escolha = atoi(entrada); // Converte para inteiro
 
-        switch (escolha) {
-            case 1:
-                strcpy(status, "Pendente");
-                return;
-            case 2:
-                strcpy(status, "Concluído");
-                return;
-            case 3:
-                strcpy(status, "Cancelado");
-                return;
-            default:
-                printf("\nEscolha inválida! Tente novamente.\n");
-                break;
+        switch (escolha)
+        {
+        case 1:
+            strcpy(status, "Pendente");
+            return;
+        case 2:
+            strcpy(status, "Concluído");
+            return;
+        case 3:
+            strcpy(status, "Cancelado");
+            return;
+        default:
+            printf("\nEscolha inválida! Tente novamente.\n");
+            break;
         }
     }
 }
 
-
-void editarPedido() {
+void editarPedido(){
     int numero;
     printf("Digite o número do pedido que deseja editar: ");
     scanf("%d", &numero);
-    getchar();  // Limpar buffer
+    getchar(); // Limpar buffer
 
-    for (int i = 0; i < contadorPedidos; i++) {
-        if (pedidos[i]->numero == numero) {
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        if (pedidos[i]->numero == numero)
+        {
             Pedido *p = pedidos[i];
             printf("Editando pedido #%d\n", p->numero);
 
@@ -427,25 +456,31 @@ void editarPedido() {
 
             printf("Quantidade de páginas atual: %d\n", p->quantidadePaginas);
             int novasPaginas;
-            while(1){
+            while (1)
+            {
                 printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
-                if(scanf("%d", &novasPaginas) == 1 && novasPaginas >= 0){
+                if (scanf("%d", &novasPaginas) == 1 && novasPaginas >= 0)
+                {
                     break;
-                }else{
+                }
+                else
+                {
                     printf("Entrada inválida! Por favor, insira um número inteiro positivo ou 0.\n");
-                    while(getchar() != '\n');
+                    while (getchar() != '\n')
+                        ;
                 }
             }
-            getchar();  // Limpar buffer
-            if (novasPaginas > 0) {
+            getchar(); // Limpar buffer
+            if (novasPaginas > 0)
+            {
                 p->quantidadePaginas = novasPaginas;
                 p->valorTotal = novasPaginas * PRECO_POR_PAGINA;
 
-                if(p->quantidadePaginas > 50){
+                if (p->quantidadePaginas > 50)
+                {
                     p->valorTotal *= 0.9;
                 }
             }
-        
 
             printf("Status atual: %s\n", p->status);
             obterNovoStatus(p->status);
@@ -458,20 +493,24 @@ void editarPedido() {
     printf("Pedido não encontrado.\n");
 }
 
-void consultarPedidosPorStatus() {
-    if(contadorPedidos == 0){
+void consultarPedidosPorStatus()
+{
+    if (contadorPedidos == 0)
+    {
         printf("Nenhum pedido registrado.\n");
         return;
     }
 
     char status[MAX_STATUS];
     int encontrado = 0;
-    //obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
+    // obterEntradaValida(status, MAX_STATUS, "\nDigite o status (Pendente, Concluído, Cancelado): ");
 
-        Status(status);
+    Status(status);
 
-    for (int i = 0; i < contadorPedidos; i++) {
-        if (strcmp(pedidos[i]->status, status) == 0) {
+    for (int i = 0; i < contadorPedidos; i++)
+    {
+        if (strcmp(pedidos[i]->status, status) == 0)
+        {
             Pedido *p = pedidos[i];
             printf("\nPedido #%d\n", p->numero);
             printf("Solicitante: %s\n", p->nomeSolicitante);
@@ -484,20 +523,23 @@ void consultarPedidosPorStatus() {
         }
     }
 
-    if (!encontrado) {
+    if (!encontrado)
+    {
         printf("Nenhum pedido com status %s encontrado.\n", status);
     }
 }
 
-void consultarTotalCopiasValor() {
-    if(contadorPedidos == 0){
+void consultarTotalCopiasValor(){
+    if (contadorPedidos == 0)
+    {
         printf("Nenhum pedido registrado.\n");
         return;
     }
     int totalPaginas = 0;
     float totalValor = 0.0;
 
-    for (int i = 0; i < contadorPedidos; i++) {
+    for (int i = 0; i < contadorPedidos; i++)
+    {
         totalPaginas += pedidos[i]->quantidadePaginas;
         totalValor += pedidos[i]->valorTotal;
     }
@@ -506,45 +548,54 @@ void consultarTotalCopiasValor() {
     printf("Valor total arrecadado: R$ %.2f\n", totalValor);
 }
 
-void liberarMemoria() {
-    for (int i = 0; i < contadorPedidos; i++) {
+void liberarMemoria(){
+    for (int i = 0; i < contadorPedidos; i++)
+    {
         free(pedidos[i]);
     }
     free(pedidos);
 }
 
-int apenasNumeros(const char *str) {
-    for (int i = 0; i < strlen(str); i++) {
-        if (!isdigit(str[i])) {
-            return 0;  // Contém algo que não é número
+int apenasNumeros(const char *str){
+    for (int i = 0; i < strlen(str); i++)
+    {
+        if (!isdigit(str[i]))
+        {
+            return 0; // Contém algo que não é número
         }
     }
-    return 1;  // Apenas números
+    return 1; // Apenas números
 }
 
-int apenasLetras(const char *str) {
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (!isalpha(str[i]) && str[i] != ' ') {
+int apenasLetras(const char *str){
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (!isalpha(str[i]) && str[i] != ' ')
+        {
             return 0; // Contém algo que não é letra ou espaço
         }
     }
     return 1; // Apenas letras ou espaços
 }
 
-int obterOpcaoMenu() {
-    char entrada[50];  // Buffer para a entrada do usuário
+int obterOpcaoMenu(){
+    char entrada[50]; // Buffer para a entrada do usuário
     int opcao = -1;
 
-    while (1) {
+    while (1)
+    {
         printf("Digite uma opção do menu: ");
-        fgets(entrada, 50, stdin);  // Captura a entrada como string
-        entrada[strcspn(entrada, "\n")] = '\0';  // Remove o '\n'
+        fgets(entrada, 50, stdin);              // Captura a entrada como string
+        entrada[strcspn(entrada, "\n")] = '\0'; // Remove o '\n'
 
         // Verifica se a entrada contém apenas números
-        if (apenasNumeros(entrada)) {
-            opcao = atoi(entrada);  // Converte a string para inteiro
+        if (apenasNumeros(entrada))
+        {
+            opcao = atoi(entrada); // Converte a string para inteiro
             break;
-        } else {
+        }
+        else
+        {
             printf("Entrada inválida! Por favor, insira um número.\n");
         }
     }
