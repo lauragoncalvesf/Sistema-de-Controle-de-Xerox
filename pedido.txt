@@ -1,0 +1,24 @@
+Número: 01
+Nome do Solicitante: Nome do Solicitante: laura
+Tipo de Solicitante: Tipo de Solicitante: Professor
+Quantidade de Páginas: 45
+Data do Pedido: 07/10/2024
+Valor Total: 9.00
+Status: Pendente
+
+Número: 02
+Nome do Solicitante: Nome do Solicitante: sa
+Tipo de Solicitante: Tipo de Solicitante: Professor
+Quantidade de Páginas: 45
+Data do Pedido: 07/10/2024
+Valor Total: 9.00
+Status: Cancelado
+
+Número: 03
+Nome do Solicitante: lamca
+Tipo de Solicitante: Aluno
+Quantidade de Páginas: 54
+Data do Pedido: 07/10/2024
+Valor Total: 9.72
+Status: Pendente
+

@@ -159,33 +159,30 @@ void adicionarPedido() {
         redimensionarPedidos();
     }
 
-    pedidos[contadorPedidos] = (Pedido *)malloc(sizeof(Pedido));
-    if (pedidos[contadorPedidos] == NULL) {
+    Pedido * novoPedido = (Pedido *) malloc(sizeof(Pedido));
+    if(novoPedido == NULL){
         printf("Erro ao alocar memória!\n");
-        exit(1);
+        return;
     }
 
-    Pedido *novoPedido = pedidos[contadorPedidos];
     novoPedido->numero = contadorPedidos + 1;
-
-    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "\nNome do solicitante: ");
+    obterEntradaValida(novoPedido->nomeSolicitante, MAX_NOME, "Nome do solicitante: ");
     obterTipoSolicitante(novoPedido);
 
     printf("Quantidade de páginas: ");
-    while(scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0){
+    while (scanf("%d", &novoPedido->quantidadePaginas) != 1 || novoPedido->quantidadePaginas < 0) {
         printf("Entrada inválida! Por favor, insira um número positivo: ");
-        while(getchar() != '\n');
+        while (getchar() != '\n');
     }
-    getchar();
-    
+    getchar();  // Limpar buffer
+
     obterData(novoPedido->dataPedido);
-    //calcula o valor total sem desconto
     novoPedido->valorTotal = novoPedido->quantidadePaginas * PRECO_POR_PAGINA;
     
-        if(novoPedido->quantidadePaginas > 50){
+    if(novoPedido->quantidadePaginas > 50){
         novoPedido->valorTotal *= 0.9;
-        
     }
+    
     strcpy(novoPedido->status, "Pendente");
 
     int posicao = contadorPedidos;
@@ -200,10 +197,11 @@ void adicionarPedido() {
         pedidos[i] = pedidos[i - 1];
     }
 
-    strcpy(novoPedido->status, "Pendente");
-
+    pedidos[posicao] = novoPedido;
     contadorPedidos++;
-    printf("\nPedido adicionado com sucesso!\n");
+
+    salvarPedidosNoArquivo();
+    printf("Pedido adicionado com sucesso!\n");
 }
 
 void listarPedidos() {
@@ -405,9 +403,16 @@ void editarPedido() {
             obterEntradaValida(p->nomeSolicitante, MAX_NOME, "Novo nome (ou pressione Enter para manter o atual): ");
 
             printf("Quantidade de páginas atual: %d\n", p->quantidadePaginas);
-            printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
             int novasPaginas;
-            scanf("%d", &novasPaginas);
+            while(1){
+                printf("Digite a nova quantidade de páginas (ou 0 para manter): ");
+                if(scanf("%d", &novasPaginas) == 1 && novasPaginas >= 0){
+                    break;
+                }else{
+                    printf("Entrada inválida! Por favor, insira um número inteiro positivo ou 0.\n");
+                    while(getchar() != '\n');
+                }
+            }
             getchar();  // Limpar buffer
             if (novasPaginas > 0) {
                 p->quantidadePaginas = novasPaginas;
