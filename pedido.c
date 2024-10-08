@@ -12,67 +12,90 @@ int capacidade = 100;      // Capacidade inicial
 const char *ARQUIVO_PEDIDOS = "pedido.txt";
 
 void carregarPedidosDoArquivo(){
-    FILE * arquivo = fopen(ARQUIVO_PEDIDOS, "r");
+    FILE *arquivo = fopen(ARQUIVO_PEDIDOS, "r");
 
     if(arquivo == NULL){
         printf("Nenhum arquivo de pedidos encontrado. Iniciando com uma lista vazia.\n");
         return;
     }
 
-    pedidos = malloc(capacidade * sizeof(Pedido *));
-    if(pedidos == NULL){
-        printf("Erro ao alocar memória!\n");
-        exit(1);
+    // Inicialize a lista de pedidos apenas se não estiver inicializada ainda
+    if (pedidos == NULL) {
+        pedidos = malloc(capacidade * sizeof(Pedido *));
+        if(pedidos == NULL){
+            printf("Erro ao alocar memória!\n");
+            exit(1);
+        }
     }
-    
-    while(!feof(arquivo)){
-        Pedido * novoPedido = (Pedido *)malloc(sizeof(Pedido));
+
+    while(1) {
+        Pedido *novoPedido = (Pedido *)malloc(sizeof(Pedido));
         if(novoPedido == NULL){
             printf("Erro ao alocar memória para o pedido!\n");
             exit(1);
         }
-        
-        
-        if (fscanf(arquivo, "Número: %d\n", &novoPedido->numero) == 1 &&
-            fgets(novoPedido->nomeSolicitante, MAX_NOME, arquivo) &&
-            fgets(novoPedido->tipoSolicitante, MAX_NOME, arquivo) &&
-            fscanf(arquivo, "Quantidade de Páginas: %d\n", &novoPedido->quantidadePaginas) == 1 &&
-            fscanf(arquivo, "Data do Pedido: %s\n", novoPedido->dataPedido) == 1 &&
-            fscanf(arquivo, "Valor Total: %f\n", &novoPedido->valorTotal) == 1 &&
-            fscanf(arquivo, "Status: %s\n\n", novoPedido->status) == 1) {
-                novoPedido->nomeSolicitante[strcspn(novoPedido->nomeSolicitante, "\n")] = '\0';
-                novoPedido->tipoSolicitante[strcspn(novoPedido->tipoSolicitante, "\n")] = '\0';
 
-                if(contadorPedidos >= capacidade){
-                    redimensionarPedidos();
-                }
-                pedidos[contadorPedidos++] = novoPedido;
-        }else{
+        // Leitura do número do pedido
+        if (fscanf(arquivo, "Número: %d\n", &novoPedido->numero) != 1) {
             free(novoPedido);
+            break; // Saia do loop se não conseguir ler o número do pedido (fim do arquivo)
         }
+
+        // Leitura do nome e tipo do solicitante
+        if (!fgets(novoPedido->nomeSolicitante, MAX_NOME, arquivo) ||
+            !fgets(novoPedido->tipoSolicitante, MAX_NOME, arquivo)) {
+            free(novoPedido);
+            break; // Saia do loop se houver falha na leitura
+        }
+
+        // Remover a nova linha '\n' no final das strings lidas com fgets
+        novoPedido->nomeSolicitante[strcspn(novoPedido->nomeSolicitante, "\n")] = '\0';
+        novoPedido->tipoSolicitante[strcspn(novoPedido->tipoSolicitante, "\n")] = '\0';
+
+        // Leitura da quantidade de páginas, data do pedido, valor total e status
+        if (fscanf(arquivo, "Quantidade de Páginas: %d\n", &novoPedido->quantidadePaginas) != 1 ||
+            fscanf(arquivo, "Data do Pedido: %s\n", novoPedido->dataPedido) != 1 ||
+            fscanf(arquivo, "Valor Total: %f\n", &novoPedido->valorTotal) != 1 ||
+            fscanf(arquivo, "Status: %s\n\n", novoPedido->status) != 1) {
+            free(novoPedido);
+            break; // Saia do loop se houver falha na leitura de qualquer campo
+        }
+
+        // Verificar se a lista precisa ser redimensionada
+        if (contadorPedidos >= capacidade) {
+            redimensionarPedidos();
+        }
+
+        // Adicionar o novo pedido à lista
+        pedidos[contadorPedidos++] = novoPedido;
     }
+
     fclose(arquivo);
+    printf("Pedidos carregados com sucesso! Total de pedidos: %d\n", contadorPedidos);
 }
 
 void salvarPedidosNoArquivo(){
     FILE *arquivo = fopen(ARQUIVO_PEDIDOS, "w");
 
     if(arquivo == NULL){
-        printf("Erro ao abrir o arquivo para salvar os pedidos!\n");
+        printf("Erro ao abrir o arquivo de pedidos para escrita!\n");
         return;
     }
 
-    for(int i = 0; i < contadorPedidos; i++){
-        Pedido * p = pedidos[i];
-        fprintf(arquivo, "Número: %02d\n", p->numero);
-        fprintf(arquivo, "Nome do Solicitante: %s\n", p->nomeSolicitante);
-        fprintf(arquivo, "Tipo de Solicitante: %s\n", p->tipoSolicitante);
-        fprintf(arquivo, "Quantidade de Páginas: %d\n", p->quantidadePaginas);
-        fprintf(arquivo, "Data do Pedido: %s\n", p->dataPedido);
-        fprintf(arquivo, "Valor Total: %.2f\n", p->valorTotal);
-        fprintf(arquivo, "Status: %s\n\n", p->status);
+    // Percorrer todos os pedidos na lista e salvar no arquivo
+    for (int i = 0; i < contadorPedidos; i++) {
+        Pedido *pedido = pedidos[i];
+        fprintf(arquivo, "Número: %d\n", pedido->numero);
+        fprintf(arquivo, "%s\n", pedido->nomeSolicitante);
+        fprintf(arquivo, "%s\n", pedido->tipoSolicitante);
+        fprintf(arquivo, "Quantidade de Páginas: %d\n", pedido->quantidadePaginas);
+        fprintf(arquivo, "Data do Pedido: %s\n", pedido->dataPedido);
+        fprintf(arquivo, "Valor Total: %.2f\n", pedido->valorTotal);
+        fprintf(arquivo, "Status: %s\n\n", pedido->status);
     }
+
     fclose(arquivo);
+    printf("Pedidos salvos com sucesso! Total de pedidos: %d\n", contadorPedidos);
 }
 
 void inserirPedidoOrdenado(Pedido * novoPedido){
